@@ -1,108 +1,70 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   main.c                                             :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: abouguri <abouguri@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/05/15 11:53:34 by abouguri          #+#    #+#             */
-/*   Updated: 2024/05/15 11:54:19 by abouguri         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "fractol.h"
 
-void    add_complex(t_complex *n1, t_complex n2)
+void print_usage(char*name)
 {
-    n1->real = n1->real + n2.real;
-    n1->im = n1->im + n2.im;
+    ft_putstr_fd("Bad arguments.\n", 1);
+    ft_putstr_fd("usage:\n", 1);
+    ft_putstr_fd(name, 1);
+    ft_putstr_fd(" mandelbrot\n", 1);
+    ft_putstr_fd(name, 1);
+    ft_putstr_fd(" julia [real] [imaginary]\n", 1);
 }
 
-void    squ_complex(t_complex *n)
+int is_valid_float(char*num)
 {
-    double tmp;
-    tmp = n->real;
-    n->real = (tmp * tmp) - (n->im * n->im);
-    n->im = 2 * tmp * n->im;
-}
+    int has_encountred_point;
+    size_t i;
 
-void init_image(t_fractol *fract)
-{
-    fract->img = mlx_new_image(fract->mlx, fract->width, fract->height);
-    fract->addr = mlx_get_data_addr(fract->img, &fract->bpp, &fract->size_line, &fract->endian);
-}
-
-double  map(double x, double xm, double out_min, double out_max)
-{
-    return (((x / xm) * out_max) + (((xm - x) / xm) * out_min));
-}
-
-void	my_mlx_pixel_put(t_fractol *fract, int x, int y, int color)
-{
-	char	*dst;
-
-	dst = fract->addr + y * fract->size_line + x * (fract->bpp / 8);
-	*(unsigned int*)dst = color;
-}
-
-void draw_mandelbrot(t_fractol *fract)
-{
-    t_complex c;
-    t_complex z;
-    int i;
-    for (size_t y = 0; y < fract->height; y++)
+    i = 0;
+    has_encountred_point = 0;
+    if (num && (num[i] == '-' || num[i] == '+'))
+        i++;
+    while (num && num[i])
     {
-        for (size_t x = 0; x < fract->width; x++)
-        {
-            c.real = map(x,fract->width, -2, 2);
-            c.im = map(y,fract->height, -2, 2);
-            z = c;
-            i = 1;
-            while(i < ITERATION)
-            {
-                squ_complex(&z);
-                add_complex(&z, c);
-                if ((z.im * z.im) + (z.real * z.real) > 4)
-                    break;
-                i++;
-            }
-            if ((z.im * z.im) + (z.real * z.real) > 4)
-            {
-                my_mlx_pixel_put(fract, x, y, 0x00FFFFFF);
-            }
-            else
-            {
-                my_mlx_pixel_put(fract, x, y, 0);
-            }
-            
-        }
+        if (!(num[i] == '.' || (num[i] >= '0' && num[i] <= '9')))
+            return 0;
+        if (num[i] == '.' && has_encountred_point == 0)
+            has_encountred_point = 1;            
+        else if (num[i] == '.')
+            return 0;
+        i++;
     }
-    mlx_put_image_to_window(fract->mlx, fract->window, fract->img, 0, 0);
-}
-
-int drawing(t_fractol *fract)
-{
-    draw_mandelbrot(fract);
-
+    if (i > 0)
+        return (num[i - 1] >= '0' && num[i - 1] <= '9');
     return 0;
-}
-
-int mouse(int button, int x, int y, t_fractol *fract)
-{
-    (void)fract;
-    printf("button = %d, x = %d, y = %d\n", button, x, y);
-    return (0);
 }
 
 int main(int c, char**v)
 {
-    (void)c;
-    (void)v;
     t_fractol fract;
 
+    if (c == 2 && ft_strcmp(v[1], "mandelbrot") == 0)
+    {
+        fract.fract_type = MANDELBROT;
+    }
+    else if (c == 4 && ft_strcmp(v[1], "julia") == 0)
+    {
+        fract.fract_type = JULIA;
+        if (is_valid_float(v[2]) == 0 || is_valid_float(v[3]) == 0)
+        {
+            ft_putendl_fd("Not a valid float.", STDERR_FILENO);
+            return 1;
+        }
+        fract.julia_c.real = ft_atold(v[2]);
+        fract.julia_c.im =  ft_atold(v[3]); 
+    }
+    else
+    {
+        print_usage(v[0]);
+        return 1;
+    }
     fract.mlx = mlx_init();
     fract.width = 800;
     fract.height = 800;
+    fract.zoom = 1;
+    fract.x_shift = 0;
+    fract.y_shift = 0;
+
     if (fract.mlx == NULL)
     {
         ft_putendl_fd("MLX INITIALIZATION FAILED!", 2);
@@ -115,7 +77,9 @@ int main(int c, char**v)
         exit(69);
     }
     init_image(&fract);
+    mlx_hook(fract.window, ON_DESTROY, 0, close_prog, &fract);
     mlx_mouse_hook(fract.window, mouse, &fract);
+    mlx_key_hook(fract.window, keyboard, &fract);
     mlx_loop_hook(fract.mlx, drawing, &fract);
     mlx_loop(fract.mlx);
     return 0;
