@@ -1,4 +1,4 @@
-SRC = ft_putendl_fd.c main.c ft_strcmp.c events.c tools.c maths_tools.c
+SRC = main.c mlx_part.c drawing.c events.c tools.c maths_tools.c
 OBJ = $(SRC:.c=.o)
 CC = cc
 CFLAGS = -Wall -Werror -Wextra

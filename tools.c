@@ -1,4 +1,3 @@
-
 #include "fractol.h"
 
 long double ft_atold_1(long double res, int sign, char* num)
