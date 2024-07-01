@@ -34,53 +34,76 @@ int is_valid_float(char*num)
     return 0;
 }
 
-int main(int c, char**v)
+
+
+int main(int c, char **v)
 {
     t_fractol fract;
 
+    parse_arguments(c, v, &fract);
+    initialize_fractol(&fract);
+    setup_mlx_window(&fract);
+    setup_hooks(&fract);
+    mlx_loop(fract.mlx);
+
+    return 0;
+}
+
+void parse_arguments(int c, char **v, t_fractol *fract)
+{
     if (c == 2 && ft_strcmp(v[1], "mandelbrot") == 0)
     {
-        fract.fract_type = MANDELBROT;
+        fract->fract_type = MANDELBROT;
     }
     else if (c == 4 && ft_strcmp(v[1], "julia") == 0)
     {
-        fract.fract_type = JULIA;
+        fract->fract_type = JULIA;
         if (is_valid_float(v[2]) == 0 || is_valid_float(v[3]) == 0)
         {
             ft_putendl_fd("Not a valid float.", STDERR_FILENO);
-            return 1;
+            exit(1);
         }
-        fract.julia_c.real = ft_atold(v[2]);
-        fract.julia_c.im =  ft_atold(v[3]); 
+        fract->julia_c.real = ft_atold(v[2]);
+        fract->julia_c.im = ft_atold(v[3]);
     }
     else
     {
         print_usage(v[0]);
-        return 1;
+        exit(1);
     }
-    fract.mlx = mlx_init();
-    fract.width = 800;
-    fract.height = 800;
-    fract.zoom = 1;
-    fract.x_shift = 0;
-    fract.y_shift = 0;
+}
 
-    if (fract.mlx == NULL)
+void initialize_fractol(t_fractol *fract)
+{
+    fract->mlx = mlx_init();
+    fract->width = 800;
+    fract->height = 800;
+    fract->zoom = 1;
+    fract->x_shift = 0;
+    fract->y_shift = 0;
+
+    if (fract->mlx == NULL)
     {
         ft_putendl_fd("MLX INITIALIZATION FAILED!", 2);
         exit(69);
     }
-    fract.window = mlx_new_window(fract.mlx, fract.width, fract.height, "Fractol");
-    if (fract.window == NULL)
+}
+
+void setup_mlx_window(t_fractol *fract)
+{
+    fract->window = mlx_new_window(fract->mlx, fract->width, fract->height, "Fractol");
+    if (fract->window == NULL)
     {
         ft_putendl_fd("WINDOW INITIALIZATION FAILED!", 2);
         exit(69);
     }
-    init_image(&fract);
-    mlx_hook(fract.window, ON_DESTROY, 0, close_prog, &fract);
-    mlx_mouse_hook(fract.window, mouse, &fract);
-    mlx_key_hook(fract.window, keyboard, &fract);
-    mlx_loop_hook(fract.mlx, drawing, &fract);
-    mlx_loop(fract.mlx);
-    return 0;
+    init_image(fract);
+}
+
+void setup_hooks(t_fractol *fract)
+{
+    mlx_hook(fract->window, ON_DESTROY, 0, close_prog, fract);
+    mlx_mouse_hook(fract->window, mouse, fract);
+    mlx_key_hook(fract->window, keyboard, fract);
+    mlx_loop_hook(fract->mlx, drawing, fract);
 }

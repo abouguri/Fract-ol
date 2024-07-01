@@ -65,5 +65,8 @@ int drawing(t_fractol *fract);
 int close_prog(t_fractol*fract);
 void init_image(t_fractol *fract);
 void	my_mlx_pixel_put(t_fractol *fract, int x, int y, int color);
-
+void parse_arguments(int c, char **v, t_fractol *fract);
+void initialize_fractol(t_fractol *fract);
+void setup_mlx_window(t_fractol *fract);
+void setup_hooks(t_fractol *fract);
 #endif
